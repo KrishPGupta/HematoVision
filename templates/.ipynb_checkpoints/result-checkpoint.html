@@ -1,16 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Result</title>
+    <meta charset="UTF-8">
+    <title>Result - HematoVision</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            background: url('{{ url_for("static", filename="bg5.jpg") }}') no-repeat center;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        /* LEFT PANEL */
+        .left {
+            width: 30%;
+            margin-left: 5%;
+            height: 90vh;
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* RESULT CARD */
+        .card {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(18px);
+            border-radius: 25px;
+            text-align: center;
+            padding: 40px 20px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card h1 {
+            color: white;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .card img {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin: 0 auto 20px;
+        }
+
+        .card h2 {
+            color: white;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .card button {
+            background: #ff3b5c;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .card button:hover {
+            background: #ff1f4b;
+        }
+
+        /* RIGHT PANEL */
+        .right {
+            width: 65%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* SCROLL VIEW */
+        .viewport {
+            height: 100vh;
+            width: 85%;
+            overflow: hidden;
+            border-radius: 25px;
+        }
+
+        .track {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: scroll 12s linear infinite;
+        }
+
+        .track img {
+            width: 100%;
+            height: 50vh;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50vh); }
+        }
+
+    </style>
 </head>
-<body style="text-align:center;">
-    <h2>Prediction Result</h2>
 
-    <h3>Predicted Class: {{ label }}</h3>
+<body>
 
-    <img src="data:image/png;base64,{{ image }}" width="250">
+    <!-- LEFT SIDE -->
+    <div class="left">
+        <div class="card">
+            <h1>Prediction Result</h1>
 
-    <br><br>
-    <a href="/">Upload Another Image</a>
+            <img src="data:image/png;base64,{{ image }}" alt="Uploaded Image">
+
+            <h2>{{ label }}</h2>
+
+            <a href="/">
+                <button>Go Back</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+        <div class="viewport">
+            <div class="track">
+                <img src="{{ url_for('static', filename='bg2.jpg') }}">
+                <img src="{{ url_for('static', filename='bg3.jpg') }}">
+                <img src="{{ url_for('static', filename='bg6.jpg') }}">
+                <!-- Duplicate for seamless loop -->
+                <img src="{{ url_for('static', filename='bg2.jpg') }}">
+                <img src="{{ url_for('static', filename='bg3.jpg') }}">
+                <img src="{{ url_for('static', filename='bg6.jpg') }}">
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
