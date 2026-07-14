@@ -1,4 +1,47 @@
-Blood_Cell.h5
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.Python
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Model files (downloaded from Hugging Face at runtime — never commit)
+*.h5
+*.keras
+*.pb
+*.onnx
+
+# Jupyter
 .ipynb_checkpoints/
 
+# Uploaded / generated files (nothing should actually land here at runtime
+# now that uploads go to a temp dir, but keep this as a safety net)
+static/uploads/
+
+# Training dataset — large, shouldn't live in a deploy repo
+dataset/
+
+# Hugging Face / model cache (local dev only)
+.cache/
+huggingface_cache/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
