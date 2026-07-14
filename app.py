@@ -43,6 +43,15 @@ logger.info("Model resolved at %s", model_path)
 model = load_model(model_path)
 logger.info("Model loaded into memory.")
 
+# Warm up the model: TensorFlow's first prediction call is much slower than
+# subsequent ones (graph tracing/compilation). Doing a dummy predict here,
+# at startup, means real user requests don't pay that one-time cost and
+# risk hitting Gunicorn's request timeout.
+logger.info("Warming up model with a dummy prediction ...")
+_dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
+model.predict(_dummy_input, verbose=0)
+logger.info("Model warm-up complete.")
+
 # Class labels
 class_labels = ["eosinophil", "lymphocyte", "monocyte", "neutrophil"]
 
@@ -62,7 +71,7 @@ def predict_image(image_path):
     img_processed = preprocess_input(img.astype(np.float32))
     img_processed = np.expand_dims(img_processed, axis=0)
 
-    predictions = model.predict(img_processed)
+    predictions = model.predict(img_processed, verbose=0)
     class_index = int(np.argmax(predictions))
 
     return class_labels[class_index], img
