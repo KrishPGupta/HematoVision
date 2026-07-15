@@ -1,6 +1,6 @@
 flask==3.0.3
 gunicorn==22.0.0
-tensorflow-cpu==2.16.1
+ai-edge-litert==1.2.0
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
 huggingface_hub==0.24.6

@@ -3,40 +3,48 @@ import uuid
 import tempfile
 import logging
 
-# Keep TensorFlow quiet and CPU-only-friendly on Render's free tier
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
-os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
-
 import numpy as np
 import cv2
 import base64
 from flask import Flask, request, render_template, redirect, flash
 from werkzeug.utils import secure_filename
 from huggingface_hub import hf_hub_download
-from tensorflow.keras.models import load_model
+
+try:
+    from ai_edge_litert.interpreter import Interpreter
+except ImportError:
+    try:
+        import tflite_runtime.interpreter as tflite
+        Interpreter = tflite.Interpreter
+    except ImportError:
+        import tensorflow.lite as tflite
+        Interpreter = tflite.Interpreter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hematovision")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-key-change-me")
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB upload limit
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"}
 
 HF_REPO_ID = os.environ.get("HF_REPO_ID", "krishg15/hematovision-model")
-HF_FILENAME = os.environ.get("HF_FILENAME", "Blood_Cell.h5")
+HF_FILENAME = os.environ.get("HF_FILENAME", "Blood_Cell.tflite")
 
 logger.info("Downloading/locating model %s from %s ...", HF_FILENAME, HF_REPO_ID)
 model_path = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_FILENAME)
 logger.info("Model resolved at %s", model_path)
 
-model = load_model(model_path)
-logger.info("Model loaded into memory.")
+interpreter = Interpreter(model_path=model_path)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+logger.info("TFLite model loaded. Input shape: %s", input_details[0]["shape"])
 
-logger.info("Warming up model with a dummy prediction ...")
-_dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
-model.predict(_dummy_input, verbose=0)
+_dummy_input = np.zeros(input_details[0]["shape"], dtype=np.float32)
+interpreter.set_tensor(input_details[0]["index"], _dummy_input)
+interpreter.invoke()
 logger.info("Model warm-up complete.")
 
 class_labels = ["eosinophil", "lymphocyte", "monocyte", "neutrophil"]
@@ -54,11 +62,13 @@ def predict_image(image_path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (224, 224))
 
-    # Match training preprocessing exactly: ImageDataGenerator(rescale=1./255)
     img_processed = img.astype(np.float32) / 255.0
     img_processed = np.expand_dims(img_processed, axis=0)
 
-    predictions = model.predict(img_processed, verbose=0)
+    interpreter.set_tensor(input_details[0]["index"], img_processed)
+    interpreter.invoke()
+    predictions = interpreter.get_tensor(output_details[0]["index"])
+
     class_index = int(np.argmax(predictions))
 
     return class_labels[class_index], img
