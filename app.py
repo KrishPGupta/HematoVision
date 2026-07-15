@@ -14,7 +14,6 @@ from flask import Flask, request, render_template, redirect, flash
 from werkzeug.utils import secure_filename
 from huggingface_hub import hf_hub_download
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hematovision")
@@ -25,16 +24,8 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB upload limit
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"}
 
-# ---------------------------------------------------------------------------
-# Model loading — downloaded once from Hugging Face and cached on disk.
-# hf_hub_download checks its local cache before hitting the network, so this
-# is cheap on every subsequent call/import; it is called exactly once here,
-# at process startup, before any request is served.
-# ---------------------------------------------------------------------------
 HF_REPO_ID = os.environ.get("HF_REPO_ID", "krishg15/hematovision-model")
 HF_FILENAME = os.environ.get("HF_FILENAME", "Blood_Cell.h5")
-# HF_HOME controls where huggingface_hub caches downloads. Defaults to
-# /opt/render/.cache/huggingface on Render if not overridden by an env var.
 
 logger.info("Downloading/locating model %s from %s ...", HF_FILENAME, HF_REPO_ID)
 model_path = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_FILENAME)
@@ -43,16 +34,11 @@ logger.info("Model resolved at %s", model_path)
 model = load_model(model_path)
 logger.info("Model loaded into memory.")
 
-# Warm up the model: TensorFlow's first prediction call is much slower than
-# subsequent ones (graph tracing/compilation). Doing a dummy predict here,
-# at startup, means real user requests don't pay that one-time cost and
-# risk hitting Gunicorn's request timeout.
 logger.info("Warming up model with a dummy prediction ...")
 _dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
 model.predict(_dummy_input, verbose=0)
 logger.info("Model warm-up complete.")
 
-# Class labels
 class_labels = ["eosinophil", "lymphocyte", "monocyte", "neutrophil"]
 
 
@@ -68,7 +54,8 @@ def predict_image(image_path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (224, 224))
 
-    img_processed = preprocess_input(img.astype(np.float32))
+    # Match training preprocessing exactly: ImageDataGenerator(rescale=1./255)
+    img_processed = img.astype(np.float32) / 255.0
     img_processed = np.expand_dims(img_processed, axis=0)
 
     predictions = model.predict(img_processed, verbose=0)
@@ -95,8 +82,6 @@ def home():
             return redirect(request.url)
 
         filename = secure_filename(file.filename)
-        # Use a temp file with a random prefix so concurrent users never
-        # collide, and so nothing is written into the public static/ folder.
         unique_name = f"{uuid.uuid4().hex}_{filename}"
         filepath = os.path.join(tempfile.gettempdir(), unique_name)
 
@@ -111,12 +96,9 @@ def home():
             flash("Something went wrong while processing the image.")
             return redirect(request.url)
         finally:
-            # Always clean up the temp upload, success or failure.
             if os.path.exists(filepath):
                 os.remove(filepath)
 
-        # Encode the (in-memory) processed image as base64 for display —
-        # nothing is written back to disk.
         _, buffer = cv2.imencode(".png", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         img_str = base64.b64encode(buffer).decode("utf-8")
 
@@ -127,12 +109,9 @@ def home():
 
 @app.route("/healthz")
 def healthz():
-    # Cheap liveness/readiness endpoint — useful for Render health checks.
     return {"status": "ok"}, 200
 
 
 if __name__ == "__main__":
-    # Local dev only. In production, Gunicorn imports `app` directly and
-    # this block never runs.
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
