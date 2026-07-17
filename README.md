@@ -1,75 +1,83 @@
-# 🩸 HematoVision – Blood Cell Classification
+# HematoVision – Blood Cell Classification
 
-HematoVision is a deep learning-based web application that classifies blood cell images into different types using a trained CNN model.
+HematoVision is a deep learning–based web application for classifying blood cell images into distinct categories using a trained Convolutional Neural Network (CNN). The application provides an intuitive interface for uploading microscopy images and receiving fast, accurate classification results.
 
----
+🔗 **Live Demo:** [https://hematovision-71g9.onrender.com/](https://hematovision-71g9.onrender.com/)
 
-## 🚀 Features
-- Upload blood cell images
-- Predict cell type (Eosinophil, Lymphocyte, Monocyte, Neutrophil)
-- Fast and accurate classification
-- Simple and clean web interface
+## Features
 
----
+- Upload blood cell images through a simple web interface
+- Classify images into one of four cell types: Eosinophil, Lymphocyte, Monocyte, or Neutrophil
+- Real-time inference with a pre-trained CNN model
+- Clean, responsive front-end design
 
-## 🧠 Model
-- Trained using Convolutional Neural Networks (CNN)
-- Dataset includes 4 blood cell categories:
-  - Eosinophil
-  - Lymphocyte
-  - Monocyte
-  - Neutrophil
+## Model Overview
 
----
+The classification model is built using a Convolutional Neural Network trained on a labeled dataset spanning four blood cell categories:
 
-## 🛠️ Tech Stack
-- Python
-- Flask
-- TensorFlow / Keras
-- OpenCV
-- HTML, CSS
+- Eosinophil
+- Lymphocyte
+- Monocyte
+- Neutrophil
 
----
+## Tech Stack
 
-## 📂 Project Structure
+| Component        | Technology            |
+|-------------------|------------------------|
+| Language          | Python                |
+| Web Framework     | Flask                 |
+| Deep Learning     | TensorFlow / Keras    |
+| Image Processing  | OpenCV                |
+| Front End         | HTML, CSS             |
 
+## Project Structure
+
+```
 HematoVision/
-│── static/
-│── templates/
+├── static/
+├── templates/
 │   ├── home.html
 │   └── result.html
-│── app.py
-│── Blood_Cell.h5
-│── requirements.txt
+├── app.py
+├── Blood_Cell.h5
+└── requirements.txt
+```
 
----
+## Getting Started
 
-## ▶️ How to Run
+### Prerequisites
+
+- Python 3.x
+- pip
+
+### Installation
 
 ```bash
 git clone https://github.com/KrishPGupta/HematoVision.git
 cd HematoVision
 pip install -r requirements.txt
+```
+
+### Running the Application
+
+```bash
 python app.py
 ```
 
-Open in browser:
+Then open your browser and navigate to:
 
+```
 http://127.0.0.1:5000
+```
 
-Open in browser:
+## Demo
 
-http://127.0.0.1:5000
+Try it live: [https://hematovision-71g9.onrender.com/](https://hematovision-71g9.onrender.com/)
 
+1. Upload a blood cell image via the web interface.
+2. Click **Predict**.
+3. View the predicted cell classification.
 
-⸻
+## Author
 
-📸 Demo
-
-Upload an image → Click Predict → Get classification result
-
-⸻
-
-👨‍💻 Author
-
-Krish Gupta
+**Krish Gupta**
